@@ -8,9 +8,6 @@ class ActionedComments(Base):
     __tablename__ = "ActionedComments"
     comment_id = Column(String(30), nullable=True, primary_key=True)
     date_actioned = Column(DateTime, nullable=True)
-    # TODO
-    # add subreddit name
-    # add success or fail
 
     def __init__(
         self,

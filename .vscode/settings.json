@@ -9,5 +9,6 @@
         "./moderatelyhelpfulbot"
     ],
     "python.linting.pylintPath": "./env/bin/pylint",
-    "python.defaultInterpreterPath": "./env/bin/python"
+    "python.defaultInterpreterPath": "./env/bin/python",
+    "python.linting.pylintCategorySeverity.refactor": "Error"
 }

@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timedelta, timezone
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import humanize
 import praw
@@ -12,14 +12,26 @@ from enums import CountedStatus, SubStatus
 from logger import logger
 from models.reddit import SubmittedPost
 from reddit import REDDIT_CLIENT
-from sqlalchemy import (SMALLINT, Boolean, Column, DateTime, Integer, String,
-                        UnicodeText, desc, func, true)
-from settings import BOT_NAME
+from sqlalchemy import (
+    SMALLINT,
+    Boolean,
+    Column,
+    DateTime,
+    Integer,
+    String,
+    UnicodeText,
+    desc,
+    func,
+    true,
+)
+from settings import settings
+
+BOT_NAME = settings["bot_name"]
 
 s = get_session()
 
 
-class TrackedSubreddit(Base):
+class TrackedSubreddit(Base):  # pylint: disable=too-many-instance-attributes
     __tablename__ = "TrackedSubs"
     subreddit_name = Column(String(21), nullable=False, primary_key=True)
     checking_mail_enabled = Column(Boolean, nullable=True)  # don't need this?
@@ -41,7 +53,7 @@ class TrackedSubreddit(Base):
     mm_convo_id = Column(String(10), nullable=True, default=None)
     is_nsfw = Column(Boolean, nullable=False, default=0)
 
-    subreddit_mods = []
+    subreddit_mods: List[str] = []
     rate_limiting_enabled = False
     min_post_interval_hrs = 72
     min_post_interval_txt = ""
@@ -78,7 +90,7 @@ class TrackedSubreddit(Base):
     lock_thread = True
     comment_stickied = False
     title_not_exempt_keyword = None
-    canned_responses = {}
+    canned_responses: Dict[str, str] = {}
     api_handle = None
     instaban_subs = None
 
@@ -91,7 +103,9 @@ class TrackedSubreddit(Base):
         self.api_handle = REDDIT_CLIENT.subreddit(self.subreddit_name)
         self.active_status = SubStatus.UNKNOWN.value
 
-    def get_mods_list(self, subreddit_handle=None) -> List[str]:
+    def get_mods_list(
+        self, subreddit_handle=None  # pylint: disable=unused-argument
+    ) -> List[str]:  # pylint: disable=unused-argument
         self.api_handle = (
             REDDIT_CLIENT.subreddit(self.subreddit_name)
             if not self.api_handle
@@ -102,7 +116,7 @@ class TrackedSubreddit(Base):
         except prawcore.exceptions.NotFound:
             return []
 
-    def check_access(self) -> SubStatus:
+    def check_access(self) -> SubStatus:  # pylint: disable=too-many-return-statements
         api_handle = (
             REDDIT_CLIENT.subreddit(self.subreddit_name)
             if not self.api_handle
@@ -115,10 +129,10 @@ class TrackedSubreddit(Base):
             self.active_status = SubStatus.NOT_MOD.value
             return SubStatus.NOT_MOD
         try:
-            logger.warning(f"accessing wiki config {self.subreddit_name}")
+            logger.warning("accessing wiki config %s", self.subreddit_name)
             wiki_page = self.api_handle.wiki[BOT_NAME]
             _ = wiki_page.revision_date
-            settings_yaml = yaml.safe_load(wiki_page.content_md)
+            yaml.safe_load(wiki_page.content_md)
         except prawcore.exceptions.NotFound:
             return SubStatus.NO_CONFIG
         except prawcore.exceptions.Forbidden:
@@ -144,7 +158,7 @@ class TrackedSubreddit(Base):
         s.commit()
         return active_status
 
-    def update_from_yaml(self, force_update: bool = False) -> Tuple[Boolean, String]:
+    def update_from_yaml(self, force_update: bool = False) -> Tuple[Boolean, String]:  # noqa: E501 pylint: disable=too-many-return-statements
         return_text = "Updated Successfully!"
         self.api_handle = (
             REDDIT_CLIENT.subreddit(self.subreddit_name)
@@ -163,7 +177,7 @@ class TrackedSubreddit(Base):
 
         if force_update or self.settings_yaml_txt is None:
             try:
-                logger.warning(f"accessing wiki config {self.subreddit_name}")
+                logger.warning("accessing wiki config %s, ", self.subreddit_name)
                 wiki_page = REDDIT_CLIENT.subreddit(self.subreddit_name).wiki[BOT_NAME]
                 if wiki_page:
                     self.settings_yaml_txt = wiki_page.content_md
@@ -172,12 +186,15 @@ class TrackedSubreddit(Base):
                         self.bot_mod = wiki_page.revision_by.name
                     else:
                         self.active_status = SubStatus.NO_CONFIG.value
-            except (prawcore.exceptions.NotFound, prawcore.exceptions.Forbidden) as e:
-                logger.warning(f"no config accessible for {self.subreddit_name}")
+            except (
+                prawcore.exceptions.NotFound,
+                prawcore.exceptions.Forbidden,
+            ) as error:
+                logger.warning("no config accessible for %s", self.subreddit_name)
                 self.rate_limiting_enabled = False
                 self.active_status = SubStatus.CONFIG_ACCESS_ERROR.value
 
-                return False, str(e)
+                return False, str(error)
 
         if self.settings_yaml_txt is None:
             return (
@@ -190,8 +207,8 @@ class TrackedSubreddit(Base):
             yaml.scanner.ScannerError,
             yaml.composer.ComposerError,
             yaml.parser.ParserError,
-        ) as e:
-            return False, str(e)
+        ) as error:
+            return False, str(error)
 
         if self.settings_yaml is None:
             return False, "I couldn't get settings from the wiki for some reason :/"
@@ -203,7 +220,7 @@ class TrackedSubreddit(Base):
         if "post_restriction" in self.settings_yaml:
             pr_settings = self.settings_yaml["post_restriction"]
             self.rate_limiting_enabled = True
-            possible_settings = {
+            possible_settings: Any = {
                 "max_count_per_interval": "int",
                 "ignore_AutoModerator_removed": "bool",
                 "ignore_moderator_removed": "bool",
@@ -245,11 +262,17 @@ class TrackedSubreddit(Base):
                     )
 
                     pr_setting_type = type(pr_setting_value).__name__
-                    # if possible_settings[pr_setting] not in f"{type(pr_settings[pr_setting])}":  will not work for true for modmail stting to use default template
+                    # if possible_settings[pr_setting] not in f"{type(pr_settings[pr_setting])}":
+                    # will not work for true for modmail stting to use default template
                     # if "min" in pr_setting or "hrs" in pr_setting\
                     #        and isinstance(pr_settings[pr_setting], str):
 
-                    # print(f"{self.subreddit_name}: {pr_setting} {pr_setting_value} {pr_setting_type}, {possible_settings[pr_setting]}")
+                    print(
+                        (
+                            f"{self.subreddit_name}: {pr_setting} {pr_setting_value} {pr_setting_type},"
+                            f"{possible_settings[pr_setting]}"
+                        )
+                    )
                     if (
                         pr_setting_type == "NoneType"
                         or pr_setting_type in possible_settings[pr_setting].split(";")
@@ -258,7 +281,8 @@ class TrackedSubreddit(Base):
 
                     else:
                         return_text = (
-                            f"{self.subreddit_name} invalid data type in yaml: `{pr_setting}` which "
+                            f"{self.subreddit_name} invalid data type in yaml: "
+                            f"`{pr_setting}` which "
                             f"is written as `{pr_setting_value}` should be of type "
                             f"{possible_settings[pr_setting]} but is type {pr_setting_type}.  "
                             f"Make sure you use lowercase true and false"
@@ -266,8 +290,9 @@ class TrackedSubreddit(Base):
                         print(return_text)
                         return False, return_text
                 else:
-                    return_text = "Did not understand variable '{}' for {}".format(
-                        pr_setting, self.subreddit_name
+                    return_text = (
+                        f"Did not understand variable '{pr_setting}' "
+                        f"for {self.subreddit_name}"
                     )
                     print(return_text)
 
@@ -298,7 +323,7 @@ class TrackedSubreddit(Base):
 
         if "modmail" in self.settings_yaml:
             m_settings = self.settings_yaml["modmail"]
-            possible_settings = (
+            possible_settings: Any = (  # type: ignore
                 "modmail_no_posts_reply",
                 "modmail_no_posts_reply_internal",
                 "modmail_posts_reply",
@@ -314,9 +339,7 @@ class TrackedSubreddit(Base):
                     if m_setting in possible_settings:
                         setattr(self, m_setting, m_settings[m_setting])
                     else:
-                        return_text = "Did not understand variable '{}'".format(
-                            m_setting
-                        )
+                        return_text = f"Did not understand variable '{m_setting}'"
         if "history_checking" in self.settings_yaml:
             h_settings = self.settings_yaml["history_checking"]
             possible_settings = ("instaban_subs",)
@@ -325,9 +348,7 @@ class TrackedSubreddit(Base):
                     if h_setting in possible_settings:
                         setattr(self, h_setting, h_settings[h_setting])
                     else:
-                        return_text = "Did not understand variable '{}'".format(
-                            h_setting
-                        )
+                        return_text = f"Did not understand variable '{h_setting}'"
 
         self.min_post_interval = (
             self.min_post_interval if self.min_post_interval else timedelta(hours=72)
@@ -346,8 +367,12 @@ class TrackedSubreddit(Base):
         if self.ban_duration_days == 0:
             return (
                 False,
-                "ban_duration_days can no longer be zero. Use `ban_duration_days: ~` to disable or use "
-                "`ban_duration_days: 999` for permanent bans. Make sure there is a space after the colon.",
+                (
+                    "ban_duration_days can no longer be zero. "
+                    "Use `ban_duration_days: ~` to disable or use "
+                    "`ban_duration_days: 999` for permanent bans. "
+                    "Make sure there is a space after the colon."
+                ),
             )
 
         return True, return_text
@@ -356,7 +381,7 @@ class TrackedSubreddit(Base):
     def get_subreddit_by_name(subreddit_name: str, create_if_not_exist=True):
         if subreddit_name.startswith("/r/"):
             subreddit_name = subreddit_name.replace("/r/", "")
-        subreddit_name: str = subreddit_name.lower()
+        subreddit_name: str = subreddit_name.lower()  # type: ignore
         tr_sub: TrackedSubreddit = s.query(TrackedSubreddit).get(subreddit_name)
         if not tr_sub:  # does not exist in database
             if not create_if_not_exist:
@@ -367,7 +392,10 @@ class TrackedSubreddit(Base):
             except prawcore.PrawcoreException:
                 return None
         else:
-            successful, message = tr_sub.update_from_yaml(
+            (
+                successful,  # pylint: disable=unused-variable
+                message,  # pylint: disable=unused-variable
+            ) = tr_sub.update_from_yaml(  # pylint: disable=unused-variable
                 force_update=False
             )  # load variables from stored yaml
         return tr_sub
@@ -386,20 +414,21 @@ class TrackedSubreddit(Base):
             .all()
         )
         if not recent_posts:
-            return "No posts found for {0} in {1}.".format(
-                author_name, self.subreddit_name
-            )
+            return f"No posts found for {author_name} in {self.subreddit_name}."
         diff = 0
         diff_str = "--"
         response_lines = [
-            "For the last 4 months (since following this subreddit):\n\n|Time|Since Last|Author|Title|Status|\n"
-            "|:-------|:-------|:------|:-----------|:------|\n"
+            (
+                "For the last 4 months (since following this subreddit):\n\n"
+                "|Time|Since Last|Author|Title|Status|\n"
+                "|:-------|:-------|:------|:-----------|:------|\n"
+            )
         ]
         for post in recent_posts:
             if diff != 0:
                 diff_str = str(post.time_utc - diff)
             response_lines.append(
-                "|{}|{}|u/{}|[{}]({})|{}|\n".format(
+                "|{}|{}|u/{}|[{}]({})|{}|\n".format(  # pylint: disable=consider-using-f-string
                     post.time_utc,
                     diff_str,
                     post.author,
@@ -439,14 +468,14 @@ class TrackedSubreddit(Base):
         )
 
         response_lines = [
-            "Stats report for {0} \n\n".format(self.subreddit_name),
-            "|Author|Count|\n\n" "|-----|----|",
+            f"Stats report for {self.subreddit_name} \n\n",
+            "|Author|Count|\n\n|-----|----|",
         ]
         for post, count in authors:
-            response_lines.append("|{}|{}|".format(post.author, count))
+            response_lines.append(f"|{post.author}|{count}|")
 
         return (
-            "total_reviewed: {}\n\n"
+            "total_reviewed: {}\n\n"  # pylint: disable=consider-using-f-string
             "total_identified: {}"
             "\n\n{}".format(
                 total_reviewed, total_identified, "\n\n".join(response_lines)
@@ -477,8 +506,8 @@ class TrackedSubreddit(Base):
         self, input_text, recent_post=None, prev_post=None, post_list=None
     ):
         if not isinstance(input_text, str):
-            print("error: {0} is not a string".format(input_text))
-            return "error: `{0}` is not a string in your config".format(str(input_text))
+            print(f"error: {input_text} is not a string")
+            return f"error: `{input_text}` is not a string in your config"
         if post_list and not prev_post:
             prev_post = post_list[0]
         if post_list and "{summary table}" in input_text:
@@ -522,20 +551,16 @@ class TrackedSubreddit(Base):
             input_text = input_text.replace("{url}", recent_post.get_url())
 
         input_text = input_text.replace("{subreddit}", self.subreddit_name)
-        input_text = input_text.replace(
-            "{maxcount}", "{0}".format(self.max_count_per_interval)
-        )
-        input_text = input_text.replace(
-            "{interval}", "{0}m".format(self.min_post_interval_txt)
-        )
+        input_text = input_text.replace("{maxcount}", f"{self.max_count_per_interval}")
+        input_text = input_text.replace("{interval}", "{self.min_post_interval_txt}m")
         return input_text
 
     def populate_tags2(
         self, input_text, recent_post=None, prev_post=None, post_list=None
     ):
         if not isinstance(input_text, str):
-            print("error: {0} is not a string".format(input_text))
-            return "error: `{0}` is not a string in your config".format(str(input_text))
+            print(f"error: {input_text} is not a string")
+            return f"error: `{input_text}` is not a string in your config"
 
         mydict = {
             "{subreddit}": self.subreddit_name,
@@ -594,5 +619,4 @@ class TrackedSubreddit(Base):
         if not self.api_handle:
             self.api_handle = REDDIT_CLIENT.subreddit(self.subreddit_name)
             return self.api_handle
-        else:
-            return self.api_handle
+        return self.api_handle

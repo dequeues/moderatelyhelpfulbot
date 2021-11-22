@@ -6,11 +6,11 @@ from sqlalchemy import Boolean, Column, String
 
 class Broadcast(Base):
     __tablename__ = "Broadcast"
-    id = Column(String(10), nullable=True, primary_key=True)
+    id = Column(String(10), nullable=True, primary_key=True)  # pylint: disable=invalid-name
     title = Column(String(191), nullable=True)
     text = Column(String(191), nullable=True)
     subreddit = Column(String(191), nullable=True)
     sent = Column(Boolean, nullable=True)
 
     def __init__(self, post):
-        self.id = post.id
+        self.id = post.id  # pylint: disable=invalid-name

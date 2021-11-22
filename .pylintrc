@@ -32,7 +32,7 @@ ignore-patterns=
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-init-hook=import sys; sys.path.append("moderatelyhelpfulbot")
+init-hook='import sys; sys.path.append("moderatelyhelpfulbot"); sys.path.append(".")'
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use.
@@ -88,7 +88,17 @@ disable=raw-checker-failed,
         use-symbolic-message-instead,
         missing-module-docstring,
         missing-class-docstring,
-        missing-function-docstring
+        missing-function-docstring,
+        global-variable-not-assigned,
+        logging-fstring-interpolation,
+        too-many-lines,
+        line-too-long, # Done with flake8
+        too-many-statements,
+        too-many-nested-blocks,
+        too-few-public-methods,
+        too-many-branches,
+        too-many-locals,
+        R0801
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -419,7 +429,7 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=100
+max-line-length=120
 
 # Maximum number of lines in a module.
 max-module-lines=1000

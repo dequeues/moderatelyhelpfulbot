@@ -16,8 +16,8 @@ class CommonPost(Base):
 
     api_handle = None
 
-    def __init__(self, submission: Submission, save_text: bool = False):
-        self.id = submission.id
+    def __init__(self, submission: Submission, save_text: bool = False):  # pylint: disable=unused-argument
+        self.id = submission.id  # pylint: disable=invalid-name
         self.title = submission.title[0:190]
         self.author = str(submission.author)
         self.time_utc = datetime.utcfromtimestamp(submission.created_utc)
@@ -27,14 +27,10 @@ class CommonPost(Base):
         return f"http://redd.it/{self.id}"
 
     def get_comments_url(self) -> str:
-        return (
-            f"https://www.reddit.com/r/"
-            f"{self.subreddit_name}/comments/{self.id}"
-        )
+        return f"https://www.reddit.com/r/{self.subreddit_name}" f"/comments/{self.id}"
 
     def get_api_handle(self) -> Submission:
         if not self.api_handle:
             self.api_handle = REDDIT_CLIENT.submission(id=self.id)
             return self.api_handle
-        else:
-            return self.api_handle
+        return self.api_handle

@@ -4,15 +4,9 @@ from pydantic.dataclasses import dataclass
 
 
 @dataclass
-class PostRestriction:
+class PostRestriction:  # pylint: disable=too-many-instance-attributes
     action: Optional[
-        Literal[
-            "remove",
-            "modmail",
-            "comment",
-            "grace_period_mins",
-            "report"
-        ]
+        Literal["remove", "modmail", "comment", "grace_period_mins", "report"]
     ] = None
     approve: Optional[bool] = None
     author_exempt_flair_keyword: Optional[str] = None
@@ -23,7 +17,7 @@ class PostRestriction:
     exempt_link_posts: Optional[bool] = None
     exempt_self_posts: Optional[bool] = None
     grace_period_mins: Optional[int] = None
-    ignore_autoModerator_removed: Optional[bool] = None
+    ignore_autoModerator_removed: Optional[bool] = None  # pylint: disable=invalid-name
     ignore_moderator_removed: Optional[bool] = None
     lock_thread: Optional[bool] = None
     max_count_per_interval: Optional[int] = None
@@ -32,8 +26,8 @@ class PostRestriction:
     report_reason: Optional[str] = None
     title_exempt_keyword: Optional[str] = None
 
-    @validator('ban_duration_days')
-    # pylint: disable=no-self-argument
+    @validator("ban_duration_days")
+    # pylint: disable=no-self-argument,no-self-use
     def ban_duration_days_valid(cls, value):
         # pylint: enable=no-self-argument
         if value and (value < 0 or value > 999):

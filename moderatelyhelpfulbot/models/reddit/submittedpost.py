@@ -19,7 +19,7 @@ s = get_session()
 BOT_NAME = settings["bot_name"]
 
 
-class SubmittedPost(Base):
+class SubmittedPost(Base):  # pylint: disable=too-many-instance-attributes
     __tablename__ = "RedditPost"
     id = Column(String(10), nullable=True, primary_key=True)
     title = Column(String(191), nullable=True)
@@ -55,7 +55,7 @@ class SubmittedPost(Base):
     api_handle = None
 
     def __init__(self, submission: Submission, save_text: bool = False):
-        self.id = submission.id
+        self.id = submission.id  # pylint: disable=invalid-name
         self.title = submission.title[0:190]
         self.author = str(submission.author)
         if save_text:
@@ -91,17 +91,15 @@ class SubmittedPost(Base):
                         or author.last_calculated.replace(tzinfo=timezone.utc)
                         < (datetime.now(pytz.utc) - timedelta(days=7))
                     ):
-                        nsfw_pct, items = author.calculate_nsfw()
+                        nsfw_pct, items = author.calculate_nsfw()  # pylint: disable=unused-variable
                         new_flair_text = f"{int(nsfw_pct)}% NSFW"
                         s.add(author)
 
                         if nsfw_pct > 60:
                             try:
-                                REDDIT_CLIENT \
-                                    .subreddit(self.subreddit_name) \
-                                    .flair.set(
-                                        self.author, text=new_flair_text
-                                    )
+                                REDDIT_CLIENT.subreddit(self.subreddit_name).flair.set(
+                                    self.author, text=new_flair_text
+                                )
                             except (
                                 praw.exceptions.APIException,
                                 prawcore.exceptions.Forbidden,
@@ -112,10 +110,7 @@ class SubmittedPost(Base):
         return f"http://redd.it/{self.id}"
 
     def get_comments_url(self) -> str:
-        return (
-            f"https://www.reddit.com/r/{self.subreddit_name}"
-            f"/comments/{self.id}"
-        )
+        return f"https://www.reddit.com/r/{self.subreddit_name}" f"/comments/{self.id}"
 
     def get_removed_explanation(self):
         if not self.bot_comment_id:
@@ -123,8 +118,7 @@ class SubmittedPost(Base):
         comment = REDDIT_CLIENT.comment(self.bot_comment_id)
         if comment and comment.body:
             return comment.body
-        else:
-            return None
+        return None
 
     def get_removed_explanation_url(self):
         if not self.bot_comment_id:
@@ -138,8 +132,7 @@ class SubmittedPost(Base):
         if not self.api_handle:
             self.api_handle = REDDIT_CLIENT.submission(id=self.id)
             return self.api_handle
-        else:
-            return self.api_handle
+        return self.api_handle
 
     def mod_remove(self) -> bool:
         try:
@@ -148,27 +141,14 @@ class SubmittedPost(Base):
             return True
         except praw.exceptions.APIException:
             link = f"http://redd.it/{self.id}"
-            logger.warning(
-                f"something went wrong removing, post: {link}"
-            )
+            logger.warning(f"something went wrong removing, post: {link}")
             return False
-        except (
-            prawcore.exceptions.Forbidden,
-            prawcore.exceptions.ServerError
-        ):
+        except (prawcore.exceptions.Forbidden, prawcore.exceptions.ServerError):
             link = f"http://redd.it/{self.id}"
-            logger.warning(
-                f"I was not allowed to remove the post: {link}"
-            )
+            logger.warning(f"I was not allowed to remove the post: {link}")
             return False
 
-    def reply(
-        self,
-        response,
-        distinguish=True,
-        approve=False,
-        lock_thread=True
-    ):
+    def reply(self, response, distinguish=True, approve=False, lock_thread=True):
         try:
             # first try to lock thread -
             # useless to make a comment unless it's possible
@@ -182,73 +162,56 @@ class SubmittedPost(Base):
             return comment
         except praw.exceptions.APIException:
             link = f"http://redd.it/{self.id}"
-            logger.warning(
-                f"Something went wrong with replying to this post: {link}"
-            )
+            logger.warning(f"Something went wrong with replying to this post: {link}")
             return False
-        except (
-            prawcore.exceptions.Forbidden,
-            prawcore.exceptions.ServerError
-        ):
+        except (prawcore.exceptions.Forbidden, prawcore.exceptions.ServerError):
             link = f"http://redd.it/{self.id}"
-            logger.warning(
-                f"Something with replying to this post:: {link}"
-            )
+            logger.warning(f"Something with replying to this post:: {link}")
             return False
-        except (prawcore.exceptions.BadRequest):
+        except prawcore.exceptions.BadRequest:
             link = f"http://redd.it/{self.id}"
-            logger.warning(
-                f"Something with replying to this post:: {link}"
-            )
+            logger.warning(f"Something with replying to this post:: {link}")
             return False
 
-    def get_posted_status(self, get_removed_info=False) -> PostedStatus:
+    def get_posted_status(self, get_removed_info=False) -> PostedStatus:  # pylint: disable=too-many-return-statements
         _ = self.get_api_handle()
         try:
-            self.self_deleted = False if self.api_handle and \
-                self.api_handle.author else True
+            self.self_deleted = not (self.api_handle and self.api_handle.author)
         except prawcore.exceptions.Forbidden:
             return PostedStatus.UNKNOWN
-        self.banned_by = self.api_handle.banned_by
+        self.banned_by = self.api_handle.banned_by  # type: ignore
         if not self.banned_by and not self.self_deleted:
             return PostedStatus.UP
-        elif self.banned_by:
+        if self.banned_by:
             if self.banned_by is True:
                 return PostedStatus.SPAM_FLT
             if (
                 not self.bot_comment_id and get_removed_info
             ):  # make sure to commit to db
                 top_level_comments = list(self.get_api_handle().comments)
-                for c in top_level_comments:
+                for comment in top_level_comments:
                     if (
-                        hasattr(c, "author")
-                        and c.author
-                        and c.author.name == self.banned_by
+                        hasattr(comment, "author")
+                        and comment.author
+                        and comment.author.name == self.banned_by
                     ):
-                        self.bot_comment_id = c.id
+                        self.bot_comment_id = comment.id
                         break
             if self.banned_by == "AutoModerator":
                 return PostedStatus.AUTOMOD_RM
-            elif self.banned_by == "Flair_Helper":
+            if self.banned_by == "Flair_Helper":
                 return PostedStatus.FH_RM
-            elif self.banned_by == BOT_NAME:
+            if self.banned_by == BOT_NAME:
                 return PostedStatus.MHB_RM
-            elif "bot" in self.banned_by.lower():
+            if "bot" in self.banned_by.lower():
                 return PostedStatus.BOT_RM
-            else:
-                return PostedStatus.MOD_RM
-        elif self.self_deleted:
+            return PostedStatus.MOD_RM
+        if self.self_deleted:
             return PostedStatus.SELF_DEL
-        else:
-            print(f"unknown status: {self.banned_by}")
-            return PostedStatus.UNKNOWN
+        print(f"unknown status: {self.banned_by}")
+        return PostedStatus.UNKNOWN
 
-    def update_status(
-        self,
-        reviewed=None,
-        flagged_duplicate=None,
-        counted_status=None
-    ):
+    def update_status(self, reviewed=None, flagged_duplicate=None, counted_status=None):
         if reviewed is not None:
             self.reviewed = reviewed
 
@@ -259,6 +222,8 @@ class SubmittedPost(Base):
             if flagged_duplicate is True:
                 self.counted_status = CountedStatus.FLAGGED.value
         self.last_checked = datetime.now(pytz.utc)
-        # self.response_time = datetime.now(pytz.utc)-self.time_utc.replace(tzinfo=timezone.utc)
+        # self.response_time = datetime.now(
+        #   pytz.utc
+        # )-self.time_utc.replace(tzinfo=timezone.utc)
         if not self.response_time:
             self.response_time = datetime.now(pytz.utc)

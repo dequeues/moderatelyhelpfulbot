@@ -1,17 +1,26 @@
 #!/usr/bin/env python3.7
 from datetime import datetime
-
+import traceback
+import time
 import prawcore
 import pytz
 import core
 from database import get_session
 from models.reddit import TrackedSubreddit
 from settings import settings
-from utils import (calculate_stats, check_new_submissions,
-                   check_spam_submissions, handle_direct_messages,
-                   handle_modmail_messages, load_settings,
-                   look_for_rule_violations2, nsfw_checking, purge_old_records,
-                   send_broadcast_messages)
+from utils import (
+    calculate_stats,
+    check_new_submissions,
+    check_spam_submissions,
+    handle_direct_messages,
+    handle_modmail_messages,
+    load_settings,
+    look_for_rule_violations2,
+    nsfw_checking,
+    purge_old_records,
+    send_broadcast_messages,
+)
+
 
 s = get_session()
 
@@ -26,27 +35,27 @@ def main_loop():
 
     i = 0
     while True:
-        print('start_loop')
+        print("start_loop")
         try:
             i += 1
-            UPDATE_LIST = core.UPDATE_LIST
+            UPDATE_LIST = core.UPDATE_LIST  # pylint: disable=invalid-name
             if UPDATE_LIST:
                 print("updating list")
                 # trs = s.query(TrackedSubreddit)
                 # .filter(TrackedSubreddit.active_status != 0).all()
                 trs = s.query(TrackedSubreddit).all()
-                for tr in trs:
+                for tracked_subreddit in trs:
                     # print(tr.subreddit_name, tr.active_status)
-                    assert isinstance(tr, TrackedSubreddit)
+                    assert isinstance(tracked_subreddit, TrackedSubreddit)
 
-                    if tr.active_status > 0:
-                        if tr.is_nsfw == 1:
-                            nsfw_subs.append(tr.subreddit_name)
+                    if tracked_subreddit.active_status > 0:
+                        if tracked_subreddit.is_nsfw == 1:
+                            nsfw_subs.append(tracked_subreddit.subreddit_name)
                         else:
-                            sfw_subs.append(tr.subreddit_name)
+                            sfw_subs.append(tracked_subreddit.subreddit_name)
                 sfw_sub_list = "+".join(sfw_subs)
                 nsfw_sub_list = "+".join(nsfw_subs)
-                UPDATE_LIST = False
+                UPDATE_LIST = False  # pylint: disable=invalid-name
                 s.commit()
             print(sfw_sub_list)
             print(nsfw_sub_list)
@@ -70,7 +79,7 @@ def main_loop():
 
             print(
                 "$$$checking rule violations took this long",
-                datetime.now(pytz.utc) - start
+                datetime.now(pytz.utc) - start,
             )
 
             # update_TMBR_submissions(look_back=timedelta(days=7))
@@ -80,21 +89,17 @@ def main_loop():
             handle_modmail_messages()
 
             nsfw_checking()
-            if (i-1) % 15 == 0:
+            if (i - 1) % 15 == 0:
                 calculate_stats()
 
         except prawcore.exceptions.ServerError:
-            import time
-            time.sleep(60*5)  # sleep for a bit server errors
-        except Exception:
-            import traceback
+            time.sleep(60 * 5)  # sleep for a bit server errors
+        except Exception:  # pylint: disable=broad-except
             trace = traceback.format_exc()
             print(trace)
-            TrackedSubreddit.get_subreddit_by_name(settings["bot_name"]) \
-                .send_modmail(
-                    subject="[Notification] MHB Exception",
-                    body=trace
-                )
+            TrackedSubreddit.get_subreddit_by_name(settings["bot_name"]).send_modmail(
+                subject="[Notification] MHB Exception", body=trace
+            )
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
 from datetime import datetime
 
 from database import Base
-from sqlalchemy import (Boolean, Column, DateTime, Integer, String,
-                        UnicodeText)
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, UnicodeText
 
 
 class SubAuthor(Base):
@@ -18,11 +17,7 @@ class SubAuthor(Base):
     last_updated = Column(
         DateTime, nullable=True, default=datetime.now()
     )  # NOT UTC!!!!!!!!!!
-    next_eligible = Column(
-        DateTime,
-        nullable=True,
-        default=datetime(2019, 1, 1, 0, 0)
-    )
+    next_eligible = Column(DateTime, nullable=True, default=datetime(2019, 1, 1, 0, 0))
     ban_last_failed = Column(DateTime, nullable=True)
     hall_pass = Column(Integer, default=0)
     last_valid_post = Column(String(10))

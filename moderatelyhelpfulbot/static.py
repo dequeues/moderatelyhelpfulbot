@@ -1,3 +1,4 @@
+# flake8: noqa
 DEFAULT_CONFIG = """---
 ###### If you edit this page, you must [click this link, then click "send"](https://old.reddit.com/message/compose?to=moderatelyhelpfulbot&subject=subredditname&message=update) to have the bot update
 ######https://www.reddit.com/r/moderatelyhelpfulbot/wiki/index
@@ -26,7 +27,8 @@ modmail:
 
 
 NAFMC = (
-    "Per our rules, contacting minors while having a history of NSFW comments and/or posts is a bannable offense.  "
+    "Per our rules, contacting minors while having a history of NSFW comments"
+    " and/or posts is a bannable offense.  "
     "Your account was reviewed by a mod team and determined to be non-compliant with our rules."
 )
 
@@ -37,4 +39,8 @@ NAFSC = (
     "Your score is currently {NSFWPCT}% and is recalculated weekly."
 )
 
-NAFCF = f"Per our rules, catfishing -- identifying as different ages in different posts -- is a bannable offense."
+NAFCF = (
+    "Per our rules, catfishing -- "
+    "identifying as different ages in different posts -- "
+    "is a bannable offense."
+)
