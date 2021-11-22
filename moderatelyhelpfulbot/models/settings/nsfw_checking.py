@@ -8,7 +8,9 @@ class NSFWChecking:
     ban_time_based_on_pct: Dict[int, int]
 
     @validator("ban_time_based_on_pct")
-    def ban_time_based_on_pct_valid_thresholds(cls, values):  # noqa: E501 pylint: disable=no-self-argument,no-self-use
+    def ban_time_based_on_pct_valid_thresholds(
+        cls, values
+    ):  # noqa: E501 pylint: disable=no-self-argument,no-self-use
         # pylint: enable=no-self-argument
         for threshold, duration_days in values.items():
             if duration_days < 0 or duration_days > 999:

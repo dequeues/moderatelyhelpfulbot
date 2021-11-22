@@ -91,7 +91,10 @@ class SubmittedPost(Base):  # pylint: disable=too-many-instance-attributes
                         or author.last_calculated.replace(tzinfo=timezone.utc)
                         < (datetime.now(pytz.utc) - timedelta(days=7))
                     ):
-                        nsfw_pct, items = author.calculate_nsfw()  # pylint: disable=unused-variable
+                        (
+                            nsfw_pct,
+                            items,  # pylint: disable=unused-variable
+                        ) = author.calculate_nsfw()
                         new_flair_text = f"{int(nsfw_pct)}% NSFW"
                         s.add(author)
 
@@ -173,7 +176,9 @@ class SubmittedPost(Base):  # pylint: disable=too-many-instance-attributes
             logger.warning(f"Something with replying to this post:: {link}")
             return False
 
-    def get_posted_status(self, get_removed_info=False) -> PostedStatus:  # pylint: disable=too-many-return-statements
+    def get_posted_status(  # pylint: disable=too-many-return-statements
+        self, get_removed_info=False
+    ) -> PostedStatus:
         _ = self.get_api_handle()
         try:
             self.self_deleted = not (self.api_handle and self.api_handle.author)

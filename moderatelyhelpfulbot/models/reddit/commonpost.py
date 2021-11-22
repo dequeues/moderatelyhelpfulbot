@@ -16,7 +16,9 @@ class CommonPost(Base):
 
     api_handle = None
 
-    def __init__(self, submission: Submission, save_text: bool = False):  # pylint: disable=unused-argument
+    def __init__(
+        self, submission: Submission, save_text: bool = False
+    ):  # pylint: disable=unused-argument
         self.id = submission.id  # pylint: disable=invalid-name
         self.title = submission.title[0:190]
         self.author = str(submission.author)

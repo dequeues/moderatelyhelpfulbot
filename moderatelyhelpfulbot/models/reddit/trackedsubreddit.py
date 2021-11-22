@@ -158,7 +158,11 @@ class TrackedSubreddit(Base):  # pylint: disable=too-many-instance-attributes
         s.commit()
         return active_status
 
-    def update_from_yaml(self, force_update: bool = False) -> Tuple[Boolean, String]:  # noqa: E501 pylint: disable=too-many-return-statements
+    def update_from_yaml(
+        self, force_update: bool = False
+    ) -> Tuple[
+        Boolean, String
+    ]:  # noqa: E501 pylint: disable=too-many-return-statements
         return_text = "Updated Successfully!"
         self.api_handle = (
             REDDIT_CLIENT.subreddit(self.subreddit_name)

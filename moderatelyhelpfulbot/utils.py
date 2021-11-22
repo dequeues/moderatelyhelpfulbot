@@ -65,8 +65,7 @@ def get_age(input_text: str):
 
 
 def check_for_post_exemptions(  # pylint: disable=too-many-return-statements,too-many-branches
-    tr_sub: TrackedSubreddit,
-    recent_post: SubmittedPost
+    tr_sub: TrackedSubreddit, recent_post: SubmittedPost
 ):
     # check if removed
     status = recent_post.get_posted_status(get_removed_info=True)
@@ -159,8 +158,7 @@ def check_for_post_exemptions(  # pylint: disable=too-many-return-statements,too
 
 
 def look_for_rule_violations2(  # pylint: disable=too-many-locals,too-many-branches
-    do_cleanup: bool = False,
-    subs_to_update=None
+    do_cleanup: bool = False, subs_to_update=None
 ):
     global REDDIT_CLIENT  # pylint: disable=global-variable-not-assigned
     global WATCHED_SUBS  # pylint: disable=global-variable-not-assigned
@@ -354,7 +352,7 @@ def look_for_rule_violations2(  # pylint: disable=too-many-locals,too-many-branc
             if post.counted_status in (
                 CountedStatus.NOT_CHKD.value,
                 CountedStatus.PREV_EXEMPT.value,
-                CountedStatus.EXEMPTED.value
+                CountedStatus.EXEMPTED.value,
             ):
                 # later remove?
                 counted_status, result = check_for_post_exemptions(tr_sub, post)
@@ -1826,7 +1824,9 @@ def check_spam_submissions(sub_list="mod"):
     global REDDIT_CLIENT
     possible_spam_posts = []
     try:
-        possible_spam_posts = list(REDDIT_CLIENT.subreddit(sub_list).mod.spam(only='submissions'))
+        possible_spam_posts = list(
+            REDDIT_CLIENT.subreddit(sub_list).mod.spam(only="submissions")
+        )
     except prawcore.exceptions.Forbidden:
         pass
     for post_to_review in possible_spam_posts:
@@ -2092,7 +2092,9 @@ def nsfw_checking():  # Does not expand comments
                         body=f"Banned author {author_name} for activity on {tr_sub}"
                     )
 
-                if not check_actioned(f"comment-{top_level_comment.id}") and (  # noqa: E501 pylint: disable=too-many-boolean-expressions
+                if not check_actioned(  # pylint: disable=too-many-boolean-expressions
+                    f"comment-{top_level_comment.id}"
+                ) and (  # noqa: E501 pylint: disable=too-many-boolean-expressions
                     (
                         author.nsfw_pct > 80
                         or (op_age < 18 < author.age and author.age)

@@ -6,7 +6,9 @@ from sqlalchemy import Boolean, Column, String
 
 class Broadcast(Base):
     __tablename__ = "Broadcast"
-    id = Column(String(10), nullable=True, primary_key=True)  # pylint: disable=invalid-name
+    id = Column(
+        String(10), nullable=True, primary_key=True
+    )  # pylint: disable=invalid-name
     title = Column(String(191), nullable=True)
     text = Column(String(191), nullable=True)
     subreddit = Column(String(191), nullable=True)
