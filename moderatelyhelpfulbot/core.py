@@ -1,8 +1,8 @@
 from typing import Any, Dict
-from models.reddit import TrackedSubreddit
-from settings import settings
 
-BOT_SUB = TrackedSubreddit.get_subreddit_by_name(settings["bot_name"])
+# from moderatelyhelpfulbot.models.reddit import TrackedSubreddit
+
+# BOT_SUB = TrackedSubreddit(settings["bot_name"])
 
 # Set up some global variables
 ACCEPTING_NEW_SUBS = True

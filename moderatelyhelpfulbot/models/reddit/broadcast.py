@@ -1,6 +1,7 @@
 from database import Base
 from sqlalchemy import Boolean, Column, String
 
+
 # For messaging subreddits that use bot
 
 
@@ -16,3 +17,4 @@ class Broadcast(Base):
 
     def __init__(self, post):
         self.id = post.id  # pylint: disable=invalid-name
+        print("Broadcast init")

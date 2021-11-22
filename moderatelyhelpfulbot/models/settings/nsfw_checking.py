@@ -1,6 +1,7 @@
 from typing import Dict
-from pydantic.dataclasses import dataclass
+
 from pydantic import validator
+from pydantic.dataclasses import dataclass
 
 
 @dataclass
@@ -9,7 +10,7 @@ class NSFWChecking:
 
     @validator("ban_time_based_on_pct")
     def ban_time_based_on_pct_valid_thresholds(
-        cls, values
+            cls, values
     ):  # noqa: E501 pylint: disable=no-self-argument,no-self-use
         # pylint: enable=no-self-argument
         for threshold, duration_days in values.items():

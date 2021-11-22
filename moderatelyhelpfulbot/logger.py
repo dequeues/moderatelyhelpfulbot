@@ -3,7 +3,6 @@ import os
 
 
 def init_logger(logger_name, filename=None):
-
     if not filename:
         filename = os.path.join(logger_name + ".log")
     ilogger = logging.getLogger(logger_name)

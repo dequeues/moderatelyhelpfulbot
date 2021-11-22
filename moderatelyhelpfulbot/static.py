@@ -25,7 +25,6 @@ modmail:
     modmail_posts_reply: ~
 """
 
-
 NAFMC = (
     "Per our rules, contacting minors while having a history of NSFW comments"
     " and/or posts is a bannable offense.  "

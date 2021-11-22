@@ -1,12 +1,14 @@
 #!/usr/bin/env python3.7
-from datetime import datetime
-import traceback
 import time
+import traceback
+from datetime import datetime
+from typing import List
+
 import prawcore
 import pytz
+
 import core
-from database import get_session
-from models.reddit import TrackedSubreddit
+from moderatelyhelpfulbot import models
 from settings import settings
 from utils import (
     calculate_stats,
@@ -21,9 +23,7 @@ from utils import (
     send_broadcast_messages,
 )
 
-
-s = get_session()
-
+from database import s
 
 def main_loop():
     load_settings()
@@ -43,34 +43,41 @@ def main_loop():
                 print("updating list")
                 # trs = s.query(TrackedSubreddit)
                 # .filter(TrackedSubreddit.active_status != 0).all()
-                trs = s.query(TrackedSubreddit).all()
+                trs = s.query(models.reddit.TrackedSubreddit).all()
+
                 for tracked_subreddit in trs:
                     # print(tr.subreddit_name, tr.active_status)
-                    assert isinstance(tracked_subreddit, TrackedSubreddit)
+                    assert isinstance(tracked_subreddit, models.reddit.TrackedSubreddit)
 
                     if tracked_subreddit.active_status > 0:
                         if tracked_subreddit.is_nsfw == 1:
                             nsfw_subs.append(tracked_subreddit.subreddit_name)
                         else:
                             sfw_subs.append(tracked_subreddit.subreddit_name)
+
+
                 sfw_sub_list = "+".join(sfw_subs)
                 nsfw_sub_list = "+".join(nsfw_subs)
                 UPDATE_LIST = False  # pylint: disable=invalid-name
                 s.commit()
-            print(sfw_sub_list)
-            print(nsfw_sub_list)
-            updated_subs = check_new_submissions(sub_list=nsfw_sub_list)
-            check_spam_submissions(sub_list=nsfw_sub_list)
 
-            updated_subs += check_new_submissions(sub_list=sfw_sub_list)
-            check_spam_submissions(sub_list=sfw_sub_list)
+            print(f"SFW sub list: {sfw_sub_list}")
+            print(f"NSFW sub list: {nsfw_sub_list}")
+            updated_subs: List[str] = []
+            if nsfw_sub_list:
+                updated_subs = check_new_submissions(sub_list=nsfw_sub_list)
+                check_spam_submissions(sub_list=nsfw_sub_list)
+
+            if sfw_sub_list:
+                updated_subs += check_new_submissions(sub_list=sfw_sub_list)
+                check_spam_submissions(sub_list=sfw_sub_list)
 
             start = datetime.now(pytz.utc)
 
             if i == 1:  # Don't skip any subs if first time runnign!
                 updated_subs = None
 
-            look_for_rule_violations2(
+            look_for_rule_violations2(s,
                 do_cleanup=(i % 15 == 0), subs_to_update=updated_subs
             )  # uses a lot of resources
 
@@ -83,9 +90,9 @@ def main_loop():
             )
 
             # update_TMBR_submissions(look_back=timedelta(days=7))
-            send_broadcast_messages()
+            send_broadcast_messages(s)
             #  do_automated_replies()  This is currently disabled!!!!!!!!!!!!!!
-            handle_direct_messages()
+            handle_direct_messages(s)
             handle_modmail_messages()
 
             nsfw_checking()
@@ -97,10 +104,11 @@ def main_loop():
         except Exception:  # pylint: disable=broad-except
             trace = traceback.format_exc()
             print(trace)
-            TrackedSubreddit.get_subreddit_by_name(settings["bot_name"]).send_modmail(
+            models.reddit.TrackedSubreddit.get_subreddit_by_name(settings["bot_name"]).send_modmail(
                 subject="[Notification] MHB Exception", body=trace
             )
 
 
 if __name__ == "__main__":
+    print("main")
     main_loop()

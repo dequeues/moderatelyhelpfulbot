@@ -10,8 +10,8 @@ class ActionedComments(Base):
     date_actioned = Column(DateTime, nullable=True)
 
     def __init__(
-        self,
-        comment_id,
+            self,
+            comment_id,
     ):
         self.comment_id = comment_id
         self.date_actioned = datetime.now()

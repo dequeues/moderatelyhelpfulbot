@@ -17,7 +17,7 @@ class CommonPost(Base):
     api_handle = None
 
     def __init__(
-        self, submission: Submission, save_text: bool = False
+            self, submission: Submission, save_text: bool = False
     ):  # pylint: disable=unused-argument
         self.id = submission.id  # pylint: disable=invalid-name
         self.title = submission.title[0:190]

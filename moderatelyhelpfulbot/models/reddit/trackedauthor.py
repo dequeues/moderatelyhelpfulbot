@@ -1,6 +1,7 @@
+from collections import Counter
 from datetime import datetime
 from typing import List
-from collections import Counter
+
 import praw
 import prawcore
 import pytz
@@ -34,6 +35,7 @@ class TrackedAuthor(Base):  # pylint: disable=too-many-instance-attributes
         self.has_nsfw_post = None
         self.sub_counts = None
         self.has_banned_subs_activity = False
+        print("TrackedAuthor init")
 
     def get_api_handle(self):
         if not self.api_handle:
