@@ -151,3 +151,4 @@ settings.yaml
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+settings.yaml
