@@ -1,8 +1,9 @@
-from database import Base
 from sqlalchemy import Column, Date, Integer, String
 
+from core import dbobj
 
-class Stats2(Base):
+
+class Stats2(dbobj.Base):
     __tablename__ = "Stats2"
 
     subreddit_name = Column(String(191), primary_key=True)

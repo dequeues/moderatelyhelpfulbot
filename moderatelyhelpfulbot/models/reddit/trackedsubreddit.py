@@ -7,9 +7,6 @@ import praw
 import prawcore
 import pytz
 import yaml
-from enums import CountedStatus, SubStatus
-from logger import logger
-from settings import settings
 from sqlalchemy import (
     SMALLINT,
     Boolean,
@@ -23,12 +20,17 @@ from sqlalchemy import (
     true,
 )
 
+from enums import CountedStatus, SubStatus
+from logger import logger
 from moderatelyhelpfulbot.reddit import REDDIT_CLIENT
+from settings import settings
 
 BOT_NAME = settings["bot_name"]
 
-from . import Base, s
-class TrackedSubreddit(Base):  # pylint: disable=too-many-instance-attributes
+from core import dbobj
+s = dbobj.s
+
+class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attributes
     __tablename__ = "TrackedSubs"
     subreddit_name = Column(String(21), nullable=False, primary_key=True)
     checking_mail_enabled = Column(Boolean, nullable=True)  # don't need this?
@@ -383,7 +385,7 @@ class TrackedSubreddit(Base):  # pylint: disable=too-many-instance-attributes
 
         return True, return_text
 
-    @staticmethod
+
     def get_subreddit_by_name(subreddit_name: str, create_if_not_exist=True):
         if subreddit_name.startswith("/r/"):
             subreddit_name = subreddit_name.replace("/r/", "")

@@ -1,5 +1,3 @@
-print("models.reddit init")
-from moderatelyhelpfulbot.database import Base, s
 from moderatelyhelpfulbot.models.reddit.actionedcomments import ActionedComments
 from moderatelyhelpfulbot.models.reddit.broadcast import Broadcast
 from moderatelyhelpfulbot.models.reddit.commonpost import CommonPost

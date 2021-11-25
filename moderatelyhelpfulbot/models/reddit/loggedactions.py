@@ -1,10 +1,11 @@
 from datetime import datetime
 
-from database import Base
 from sqlalchemy import Column, DateTime, String
 
+from core import dbobj
 
-class LoggedActions(Base):
+
+class LoggedActions(dbobj.Base):
     __tablename__ = "Actions"
     subreddit_name = Column(String(21), nullable=True)
     action_id = Column(String(30), nullable=True, primary_key=True)

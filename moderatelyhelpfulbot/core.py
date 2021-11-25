@@ -1,8 +1,5 @@
 from typing import Any, Dict
-
-# from moderatelyhelpfulbot.models.reddit import TrackedSubreddit
-
-# BOT_SUB = TrackedSubreddit(settings["bot_name"])
+from moderatelyhelpfulbot.database import Database
 
 # Set up some global variables
 ACCEPTING_NEW_SUBS = True
@@ -21,3 +18,6 @@ ASL_REGEX = (
 )
 
 WATCHED_SUBS: Any = {}
+
+dbobj = Database()
+dbobj.load_models()

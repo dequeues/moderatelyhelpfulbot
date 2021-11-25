@@ -1,10 +1,11 @@
 from datetime import datetime
 
-from database import Base
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, UnicodeText
 
+from core import dbobj
 
-class SubAuthor(Base):
+
+class SubAuthor(dbobj.Base):
     __tablename__ = "SubAuthors"
     subreddit_name = Column(String(21), nullable=False, primary_key=True)
     author_name = Column(String(21), nullable=False, primary_key=True)

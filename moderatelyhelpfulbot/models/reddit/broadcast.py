@@ -1,11 +1,8 @@
-from database import Base
 from sqlalchemy import Boolean, Column, String
+from core import dbobj
 
 
-# For messaging subreddits that use bot
-
-
-class Broadcast(Base):
+class Broadcast(dbobj.Base):
     __tablename__ = "Broadcast"
     id = Column(
         String(10), nullable=True, primary_key=True

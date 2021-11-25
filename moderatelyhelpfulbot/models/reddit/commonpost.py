@@ -1,12 +1,13 @@
 from datetime import datetime
 
-from database import Base
 from praw.models import Submission
-from reddit import REDDIT_CLIENT
 from sqlalchemy import Column, DateTime, String
 
+from core import dbobj
+from reddit import REDDIT_CLIENT
 
-class CommonPost(Base):
+
+class CommonPost(dbobj.Base):
     __tablename__ = "CommonPosts"
     id = Column(String(10), nullable=True, primary_key=True)
     title = Column(String(191), nullable=True)

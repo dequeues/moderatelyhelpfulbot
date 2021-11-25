@@ -6,26 +6,14 @@ from typing import List
 
 import prawcore
 import pytz
-
 import core
-from moderatelyhelpfulbot import models
 from settings import settings
-from utils import (
-    calculate_stats,
-    check_new_submissions,
-    check_spam_submissions,
-    handle_direct_messages,
-    handle_modmail_messages,
-    load_settings,
-    look_for_rule_violations2,
-    nsfw_checking,
-    purge_old_records,
-    send_broadcast_messages,
-)
-
-from database import s
+from utils import load_settings
+from moderatelyhelpfulbot.models import reddit
+from core import dbobj
 
 def main_loop():
+    s = dbobj.s
     load_settings()
 
     sfw_subs = []
@@ -43,11 +31,11 @@ def main_loop():
                 print("updating list")
                 # trs = s.query(TrackedSubreddit)
                 # .filter(TrackedSubreddit.active_status != 0).all()
-                trs = s.query(models.reddit.TrackedSubreddit).all()
+                trs = s.query(reddit.TrackedSubreddit).all()
 
                 for tracked_subreddit in trs:
                     # print(tr.subreddit_name, tr.active_status)
-                    assert isinstance(tracked_subreddit, models.reddit.TrackedSubreddit)
+                    assert isinstance(tracked_subreddit, reddit.TrackedSubreddit)
 
                     if tracked_subreddit.active_status > 0:
                         if tracked_subreddit.is_nsfw == 1:
@@ -104,11 +92,10 @@ def main_loop():
         except Exception:  # pylint: disable=broad-except
             trace = traceback.format_exc()
             print(trace)
-            models.reddit.TrackedSubreddit.get_subreddit_by_name(settings["bot_name"]).send_modmail(
+            reddit.TrackedSubreddit.get_subreddit_by_name(settings["bot_name"]).send_modmail(
                 subject="[Notification] MHB Exception", body=trace
             )
 
 
 if __name__ == "__main__":
-    print("main")
     main_loop()

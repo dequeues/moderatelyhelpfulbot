@@ -5,15 +5,16 @@ from typing import List
 import praw
 import prawcore
 import pytz
-from database import Base
 from praw.models import ListingGenerator, Submission
 from praw.models.listing.mixins.redditor import SubListing
-from reddit import REDDIT_CLIENT
 from sqlalchemy import Column, DateTime, Integer, String
+
+from core import dbobj
+from reddit import REDDIT_CLIENT
 from utils import get_age
 
 
-class TrackedAuthor(Base):  # pylint: disable=too-many-instance-attributes
+class TrackedAuthor(dbobj.Base):  # pylint: disable=too-many-instance-attributes
     __tablename__ = "TrackedAuthor"
     author_name = Column(String(21), nullable=True, primary_key=True)
     nsfw_pct = Column(Integer)

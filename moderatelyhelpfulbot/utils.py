@@ -14,15 +14,13 @@ from sqlalchemy import String, desc, func
 
 from enums import CountedStatus, PostedStatus, SubStatus
 from logger import logger
-from moderatelyhelpfulbot import models
 from settings import settings
 from static import DEFAULT_CONFIG, NAFCF, NAFMC, NAFSC
+from moderatelyhelpfulbot.reddit import REDDIT_CLIENT
 
 BOT_NAME = settings["bot_name"]
 BOT_OWNER = settings["bot_owner"]
 
-from reddit import REDDIT_CLIENT
-from core import WATCHED_SUBS
 
 def get_age(input_text: str):
     print("l")

@@ -3,20 +3,20 @@ from datetime import datetime, timedelta, timezone
 import praw
 import prawcore
 import pytz
-from logger import logger
 from praw.models import Submission
-from reddit import REDDIT_CLIENT
-from settings import settings
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
-from moderatelyhelpfulbot.database import Base
+from logger import logger
+from core import dbobj
 from moderatelyhelpfulbot.enums import CountedStatus
 from moderatelyhelpfulbot.utils import get_age
+from reddit import REDDIT_CLIENT
+from settings import settings
 
 BOT_NAME = settings["bot_name"]
 
 
-class SubmittedPost(Base):  # pylint: disable=too-many-instance-attributes
+class SubmittedPost(dbobj.Base):  # pylint: disable=too-many-instance-attributes
     __tablename__ = "RedditPost"
     id = Column(String(10), nullable=True, primary_key=True)
     title = Column(String(191), nullable=True)
