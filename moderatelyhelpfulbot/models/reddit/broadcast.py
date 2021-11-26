@@ -1,5 +1,5 @@
-from sqlalchemy import Boolean, Column, String
 from core import dbobj
+from sqlalchemy import Boolean, Column, String
 
 
 class Broadcast(dbobj.Base):

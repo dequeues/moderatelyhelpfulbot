@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from praw.models import Submission
-from sqlalchemy import Column, DateTime, String
-
 from core import dbobj
+from praw.models import Submission
 from reddit import REDDIT_CLIENT
+from sqlalchemy import Column, DateTime, String
 
 
 class CommonPost(dbobj.Base):
@@ -18,7 +17,7 @@ class CommonPost(dbobj.Base):
     api_handle = None
 
     def __init__(
-            self, submission: Submission, save_text: bool = False
+        self, submission: Submission, save_text: bool = False
     ):  # pylint: disable=unused-argument
         self.id = submission.id  # pylint: disable=invalid-name
         self.title = submission.title[0:190]

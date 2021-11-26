@@ -4,16 +4,29 @@ import traceback
 from datetime import datetime
 from typing import List
 
+import core
 import prawcore
 import pytz
-import core
 from settings import settings
-from utils import load_settings
+from utils import (
+    calculate_stats,
+    check_new_submissions,
+    check_spam_submissions,
+    handle_direct_messages,
+    handle_modmail_messages,
+    load_settings,
+    look_for_rule_violations2,
+    nsfw_checking,
+    purge_old_records,
+    send_broadcast_messages,
+)
+
+from moderatelyhelpfulbot.core import dbobj
 from moderatelyhelpfulbot.models import reddit
-from core import dbobj
+
 
 def main_loop():
-    s = dbobj.s
+    s = dbobj.s  # noqa: E303 pylint: disable=invalid-name
     load_settings()
 
     sfw_subs = []
@@ -43,7 +56,6 @@ def main_loop():
                         else:
                             sfw_subs.append(tracked_subreddit.subreddit_name)
 
-
                 sfw_sub_list = "+".join(sfw_subs)
                 nsfw_sub_list = "+".join(nsfw_subs)
                 UPDATE_LIST = False  # pylint: disable=invalid-name
@@ -65,7 +77,7 @@ def main_loop():
             if i == 1:  # Don't skip any subs if first time runnign!
                 updated_subs = None
 
-            look_for_rule_violations2(s,
+            look_for_rule_violations2(
                 do_cleanup=(i % 15 == 0), subs_to_update=updated_subs
             )  # uses a lot of resources
 
@@ -78,9 +90,9 @@ def main_loop():
             )
 
             # update_TMBR_submissions(look_back=timedelta(days=7))
-            send_broadcast_messages(s)
+            send_broadcast_messages()
             #  do_automated_replies()  This is currently disabled!!!!!!!!!!!!!!
-            handle_direct_messages(s)
+            handle_direct_messages()
             handle_modmail_messages()
 
             nsfw_checking()
@@ -92,9 +104,9 @@ def main_loop():
         except Exception:  # pylint: disable=broad-except
             trace = traceback.format_exc()
             print(trace)
-            reddit.TrackedSubreddit.get_subreddit_by_name(settings["bot_name"]).send_modmail(
-                subject="[Notification] MHB Exception", body=trace
-            )
+            reddit.TrackedSubreddit.get_subreddit_by_name(
+                settings["bot_name"]
+            ).send_modmail(subject="[Notification] MHB Exception", body=trace)
 
 
 if __name__ == "__main__":

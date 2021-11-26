@@ -1,8 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, UnicodeText
-
 from core import dbobj
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, UnicodeText
 
 
 class SubAuthor(dbobj.Base):

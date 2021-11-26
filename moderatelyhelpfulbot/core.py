@@ -1,5 +1,7 @@
 from typing import Any, Dict
+
 from moderatelyhelpfulbot.database import Database
+from moderatelyhelpfulbot.settings import settings
 
 # Set up some global variables
 ACCEPTING_NEW_SUBS = True
@@ -21,3 +23,5 @@ WATCHED_SUBS: Any = {}
 
 dbobj = Database()
 dbobj.load_models()
+
+BOT_SUB = settings["bot_name"]

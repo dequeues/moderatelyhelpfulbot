@@ -1,0 +1,22 @@
+name: Code lint
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.7.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt --upgrade pip
+
+      - name: Flake8
+        run: python3 -m flake8 moderatelyhelpfulbot/
+
+      - name: Black
+        run: python3 -m black moderatelyhelpfulbot/
+
+      - name: Pylint
+        run: python3 -m pylint moderatelyhelpfulbot/

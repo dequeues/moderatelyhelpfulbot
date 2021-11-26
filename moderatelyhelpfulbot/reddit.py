@@ -1,5 +1,4 @@
 import praw
-
 from settings import settings
 
 REDDIT_CLIENT = praw.Reddit(

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Tuple
@@ -7,6 +9,9 @@ import praw
 import prawcore
 import pytz
 import yaml
+from core import dbobj
+from enums import CountedStatus, SubStatus
+from logger import logger
 from sqlalchemy import (
     SMALLINT,
     Boolean,
@@ -20,15 +25,14 @@ from sqlalchemy import (
     true,
 )
 
-from enums import CountedStatus, SubStatus
-from logger import logger
 from moderatelyhelpfulbot.reddit import REDDIT_CLIENT
-from settings import settings
+from moderatelyhelpfulbot.settings import settings
 
+from .submittedpost import SubmittedPost
+
+s = dbobj.s
 BOT_NAME = settings["bot_name"]
 
-from core import dbobj
-s = dbobj.s
 
 class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attributes
     __tablename__ = "TrackedSubs"
@@ -104,7 +108,7 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
         print("Tracked init")
 
     def get_mods_list(
-            self, subreddit_handle=None  # pylint: disable=unused-argument
+        self, subreddit_handle=None  # pylint: disable=unused-argument
     ) -> List[str]:  # pylint: disable=unused-argument
         self.api_handle = (
             REDDIT_CLIENT.subreddit(self.subreddit_name)
@@ -141,9 +145,9 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
             print(f"Redirect for {self.subreddit_name}")
             return SubStatus.SUB_GONE
         except (
-                yaml.scanner.ScannerError,
-                yaml.composer.ComposerError,
-                yaml.parser.ParserError,
+            yaml.scanner.ScannerError,
+            yaml.composer.ComposerError,
+            yaml.parser.ParserError,
         ):
             return SubStatus.CONFIG_ERROR
         return SubStatus.YAML_SYNTAX_OKAY
@@ -159,7 +163,7 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
         return active_status
 
     def update_from_yaml(
-            self, force_update: bool = False
+        self, force_update: bool = False
     ) -> Tuple[
         Boolean, String
     ]:  # noqa: E501 pylint: disable=too-many-return-statements
@@ -195,8 +199,8 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
                     else:
                         self.active_status = SubStatus.NO_CONFIG.value
             except (
-                    prawcore.exceptions.NotFound,
-                    prawcore.exceptions.Forbidden,
+                prawcore.exceptions.NotFound,
+                prawcore.exceptions.Forbidden,
             ) as error:
                 logger.warning("no config accessible for %s", self.subreddit_name)
                 self.rate_limiting_enabled = False
@@ -212,9 +216,9 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
         try:
             self.settings_yaml = yaml.safe_load(self.settings_yaml_txt)
         except (
-                yaml.scanner.ScannerError,
-                yaml.composer.ComposerError,
-                yaml.parser.ParserError,
+            yaml.scanner.ScannerError,
+            yaml.composer.ComposerError,
+            yaml.parser.ParserError,
         ) as error:
             return False, str(error)
 
@@ -282,8 +286,8 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
                         )
                     )
                     if (
-                            pr_setting_type == "NoneType"
-                            or pr_setting_type in possible_settings[pr_setting].split(";")
+                        pr_setting_type == "NoneType"
+                        or pr_setting_type in possible_settings[pr_setting].split(";")
                     ):
                         setattr(self, pr_setting, pr_setting_value)
 
@@ -321,8 +325,8 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
                         f"{self.min_post_interval_hrs % 24}h".replace("d0h", "d")
                     )
             if (
-                    "grace_period_mins" in pr_settings
-                    and pr_settings["grace_period_mins"] is not None
+                "grace_period_mins" in pr_settings
+                and pr_settings["grace_period_mins"] is not None
             ):
                 self.grace_period = timedelta(minutes=pr_settings["grace_period_mins"])
                 # self.grace_period_mins = pr_settings['grace_period_mins']
@@ -385,7 +389,7 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
 
         return True, return_text
 
-
+    @staticmethod
     def get_subreddit_by_name(subreddit_name: str, create_if_not_exist=True):
         if subreddit_name.startswith("/r/"):
             subreddit_name = subreddit_name.replace("/r/", "")
@@ -414,12 +418,12 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
 
         recent_posts = (
             s.query(SubmittedPost)
-                .filter(
+            .filter(
                 SubmittedPost.subreddit_name.ilike(self.subreddit_name),
                 SubmittedPost.author == author_name,
                 SubmittedPost.time_utc > datetime.now(pytz.utc) - timedelta(days=182),
             )
-                .all()
+            .all()
         )
         if not recent_posts:
             return f"No posts found for {author_name} in {self.subreddit_name}."
@@ -455,24 +459,24 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
     def get_sub_stats(self) -> str:
         total_reviewed = (
             s.query(SubmittedPost)
-                .filter(SubmittedPost.subreddit_name.ilike(self.subreddit_name))
-                .count()
+            .filter(SubmittedPost.subreddit_name.ilike(self.subreddit_name))
+            .count()
         )
         total_identified = (
             s.query(SubmittedPost)
-                .filter(SubmittedPost.subreddit_name.ilike(self.subreddit_name))
-                .filter(SubmittedPost.flagged_duplicate.is_(True))
-                .count()
+            .filter(SubmittedPost.subreddit_name.ilike(self.subreddit_name))
+            .filter(SubmittedPost.flagged_duplicate.is_(True))
+            .count()
         )
 
         authors = (
             s.query(SubmittedPost, func.count(SubmittedPost.author).label("qty"))
-                .filter(SubmittedPost.subreddit_name.ilike(self.subreddit_name))
-                .group_by(SubmittedPost.author)
-                .order_by(desc("qty"))
-                .limit(10)
-                .all()
-                .scalar()
+            .filter(SubmittedPost.subreddit_name.ilike(self.subreddit_name))
+            .group_by(SubmittedPost.author)
+            .order_by(desc("qty"))
+            .limit(10)
+            .all()
+            .scalar()
         )
 
         response_lines = [
@@ -491,10 +495,10 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
         )
 
     def send_modmail(
-            self,
-            subject=f"[Notification] Message from {BOT_NAME}",
-            body="Unspecfied text",
-            thread_id=None,
+        self,
+        subject=f"[Notification] Message from {BOT_NAME}",
+        body="Unspecfied text",
+        thread_id=None,
     ):
         if thread_id:
             REDDIT_CLIENT.subreddit(self.subreddit_name).modmail(thread_id).reply(
@@ -504,14 +508,14 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
             try:
                 REDDIT_CLIENT.subreddit(self.subreddit_name).message(subject, body)
             except (
-                    praw.exceptions.APIException,
-                    prawcore.exceptions.Forbidden,
-                    AttributeError,
+                praw.exceptions.APIException,
+                prawcore.exceptions.Forbidden,
+                AttributeError,
             ):
                 logger.warning("something went wrong in sending modmail")
 
     def populate_tags(
-            self, input_text, recent_post=None, prev_post=None, post_list=None
+        self, input_text, recent_post=None, prev_post=None, post_list=None
     ):
         if not isinstance(input_text, str):
             print(f"error: {input_text} is not a string")
@@ -564,7 +568,7 @@ class TrackedSubreddit(dbobj.Base):  # pylint: disable=too-many-instance-attribu
         return input_text
 
     def populate_tags2(
-            self, input_text, recent_post=None, prev_post=None, post_list=None
+        self, input_text, recent_post=None, prev_post=None, post_list=None
     ):
         if not isinstance(input_text, str):
             print(f"error: {input_text} is not a string")

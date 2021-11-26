@@ -1,7 +1,5 @@
+from models.settings import ModMail, PostRestriction
 from pydantic.dataclasses import dataclass
-
-from models.settings import ModMail
-from models.settings import PostRestriction
 
 
 @dataclass

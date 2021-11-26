@@ -3,15 +3,19 @@ from datetime import datetime, timedelta, timezone
 import praw
 import prawcore
 import pytz
+from core import dbobj
+from logger import logger
 from praw.models import Submission
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
-from logger import logger
-from core import dbobj
-from moderatelyhelpfulbot.enums import CountedStatus
+from moderatelyhelpfulbot.enums import CountedStatus, PostedStatus
+from moderatelyhelpfulbot.reddit import REDDIT_CLIENT
+from moderatelyhelpfulbot.settings import settings
 from moderatelyhelpfulbot.utils import get_age
-from reddit import REDDIT_CLIENT
-from settings import settings
+
+from .trackedauthor import TrackedAuthor
+
+s = dbobj.s
 
 BOT_NAME = settings["bot_name"]
 
@@ -83,10 +87,10 @@ class SubmittedPost(dbobj.Base):  # pylint: disable=too-many-instance-attributes
                     author = TrackedAuthor(self.author)
                 if author:
                     if (
-                            author.nsfw_pct == -1
-                            or not author.last_calculated
-                            or author.last_calculated.replace(tzinfo=timezone.utc)
-                            < (datetime.now(pytz.utc) - timedelta(days=7))
+                        author.nsfw_pct == -1
+                        or not author.last_calculated
+                        or author.last_calculated.replace(tzinfo=timezone.utc)
+                        < (datetime.now(pytz.utc) - timedelta(days=7))
                     ):
                         (
                             nsfw_pct,
@@ -101,8 +105,8 @@ class SubmittedPost(dbobj.Base):  # pylint: disable=too-many-instance-attributes
                                     self.author, text=new_flair_text
                                 )
                             except (
-                                    praw.exceptions.APIException,
-                                    prawcore.exceptions.Forbidden,
+                                praw.exceptions.APIException,
+                                prawcore.exceptions.Forbidden,
                             ):
                                 pass
 
@@ -174,8 +178,8 @@ class SubmittedPost(dbobj.Base):  # pylint: disable=too-many-instance-attributes
             return False
 
     def get_posted_status(  # pylint: disable=too-many-return-statements
-            self, get_removed_info=False
-    ) -> 'PostedStatus':
+        self, get_removed_info=False
+    ) -> "PostedStatus":
         _ = self.get_api_handle()
         try:
             self.self_deleted = not (self.api_handle and self.api_handle.author)
@@ -188,14 +192,14 @@ class SubmittedPost(dbobj.Base):  # pylint: disable=too-many-instance-attributes
             if self.banned_by is True:
                 return PostedStatus.SPAM_FLT
             if (
-                    not self.bot_comment_id and get_removed_info
+                not self.bot_comment_id and get_removed_info
             ):  # make sure to commit to db
                 top_level_comments = list(self.get_api_handle().comments)
                 for comment in top_level_comments:
                     if (
-                            hasattr(comment, "author")
-                            and comment.author
-                            and comment.author.name == self.banned_by
+                        hasattr(comment, "author")
+                        and comment.author
+                        and comment.author.name == self.banned_by
                     ):
                         self.bot_comment_id = comment.id
                         break

@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String
 from core import dbobj
+from sqlalchemy import Column, DateTime, String
 
 
 class ActionedComments(dbobj.Base):
@@ -10,8 +10,8 @@ class ActionedComments(dbobj.Base):
     date_actioned = Column(DateTime, nullable=True)
 
     def __init__(
-            self,
-            comment_id,
+        self,
+        comment_id,
     ):
         self.comment_id = comment_id
         self.date_actioned = datetime.now()

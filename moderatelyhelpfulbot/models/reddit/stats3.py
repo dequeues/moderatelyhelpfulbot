@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Date, Integer, String
-
 from core import dbobj
+from sqlalchemy import Column, Date, Integer, String
 
 
 class Stats3(dbobj.Base):

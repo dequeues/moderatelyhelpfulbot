@@ -5,12 +5,11 @@ from typing import List
 import praw
 import prawcore
 import pytz
+from core import dbobj
 from praw.models import ListingGenerator, Submission
 from praw.models.listing.mixins.redditor import SubListing
-from sqlalchemy import Column, DateTime, Integer, String
-
-from core import dbobj
 from reddit import REDDIT_CLIENT
+from sqlalchemy import Column, DateTime, Integer, String
 from utils import get_age
 
 
